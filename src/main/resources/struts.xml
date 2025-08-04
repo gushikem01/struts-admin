@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.5//EN"
+    "http://struts.apache.org/dtds/struts-2.5.dtd">
+
+<struts>
+    <constant name="struts.enable.DynamicMethodInvocation" value="false"/>
+    <constant name="struts.devMode" value="true"/>
+    <constant name="struts.custom.i18n.resources" value="messages"/>
+    <constant name="struts.ui.theme" value="simple"/>
+    <constant name="struts.action.extension" value="action,,"/>
+    
+    <package name="default" extends="struts-default">
+        <interceptors>
+            <interceptor name="authInterceptor" class="com.struts.admin.infrastructure.web.interceptor.AuthInterceptor"/>
+            <interceptor-stack name="authStack">
+                <interceptor-ref name="defaultStack"/>
+                <interceptor-ref name="authInterceptor"/>
+            </interceptor-stack>
+        </interceptors>
+        
+        <default-interceptor-ref name="defaultStack"/>
+        
+        <global-results>
+            <result name="login" type="redirect">login</result>
+        </global-results>
+        
+        <!-- Root action -->
+        <action name="">
+            <result type="redirect">login</result>
+        </action>
+        
+        <action name="login" class="com.struts.admin.infrastructure.web.action.LoginAction">
+            <result name="success" type="redirect">dashboard</result>
+            <result name="input">/views/login/login.jsp</result>
+            <result name="login">/views/login/login.jsp</result>
+        </action>
+        
+        <action name="logout" class="com.struts.admin.infrastructure.web.action.LoginAction" method="logout">
+            <result name="success" type="redirect">login</result>
+        </action>
+        
+        <action name="dashboard" class="com.struts.admin.infrastructure.web.action.DashboardAction">
+            <interceptor-ref name="authStack"/>
+            <result name="success">/views/dashboard/dashboard.jsp</result>
+        </action>
+    </package>
+</struts>
