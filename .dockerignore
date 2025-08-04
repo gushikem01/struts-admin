@@ -10,3 +10,10 @@ mvnw.cmd
 .vscode/
 .DS_Store
 node_modules/
+cloudbuild.yaml
+deploy.sh
+*.log
+logs/
+*.tmp
+*.bak
+*.swp

@@ -50,12 +50,13 @@ gcloud run deploy $SERVICE_NAME \
     --platform managed \
     --allow-unauthenticated \
     --memory 1Gi \
-    --cpu 1 \
+    --cpu 2 \
     --concurrency 80 \
     --max-instances 10 \
-    --timeout 300 \
+    --timeout 600 \
     --port 8080 \
-    --set-env-vars "JAVA_OPTS=-Xmx512m -Xms128m -XX:+UseG1GC" \
+    --set-env-vars "PORT=8080" \
+    --cpu-boost \
     --quiet
 
 # Get the service URL

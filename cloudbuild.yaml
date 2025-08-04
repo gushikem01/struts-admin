@@ -26,11 +26,13 @@ steps:
       '--platform', 'managed',
       '--allow-unauthenticated',
       '--memory', '1Gi',
-      '--cpu', '1',
+      '--cpu', '2',
       '--concurrency', '80',
       '--max-instances', '10',
-      '--timeout', '300',
-      '--port', '8080'
+      '--timeout', '600',
+      '--port', '8080',
+      '--set-env-vars', 'PORT=8080',
+      '--cpu-boost'
     ]
 
 # Store images in Google Container Registry
