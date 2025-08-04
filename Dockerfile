@@ -7,8 +7,11 @@ RUN apt-get update && apt-get install -y maven && rm -rf /var/lib/apt/lists/*
 # Set working directory
 WORKDIR /app
 
-# Copy Maven files
+# Copy Maven files first for better layer caching
 COPY pom.xml .
+RUN mvn dependency:go-offline -B
+
+# Copy source code
 COPY src ./src
 
 # Build the application
@@ -20,25 +23,34 @@ FROM tomcat:9-jdk11-openjdk-slim
 # Remove default webapps
 RUN rm -rf /usr/local/tomcat/webapps/*
 
+# Install curl for health checks (Cloud Run requirement)
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
 # Copy the built WAR file
 COPY --from=build /app/target/struts-admin.war /usr/local/tomcat/webapps/ROOT.war
 
 # Create logs directory
 RUN mkdir -p /usr/local/tomcat/logs
 
-# Set environment variables
-ENV JAVA_OPTS="-Xmx512m -Xms256m"
-ENV CATALINA_OPTS="-Dfile.encoding=UTF-8"
+# Cloud Run optimizations
+ENV JAVA_OPTS="-Xmx512m -Xms128m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+ENV CATALINA_OPTS="-Dfile.encoding=UTF-8 -Djava.security.egd=file:/dev/./urandom"
 
-# Expose port
-EXPOSE 8080
+# Cloud Run uses PORT environment variable
+ENV PORT=8080
+EXPOSE $PORT
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8080/ || exit 1
+# Configure Tomcat to use PORT environment variable
+RUN sed -i 's/8080/${PORT}/g' /usr/local/tomcat/conf/server.xml
 
-# Install curl for health check
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+# Health check endpoint for Cloud Run
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:${PORT}/ || exit 1
+
+# Use non-root user for security
+RUN groupadd -r tomcat && useradd -r -g tomcat tomcat
+RUN chown -R tomcat:tomcat /usr/local/tomcat
+USER tomcat
 
 # Start Tomcat
 CMD ["catalina.sh", "run"]

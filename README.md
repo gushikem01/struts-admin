@@ -34,7 +34,7 @@ src/main/java/com/struts/admin/
 - **Build Tool**: Maven
 - **Server**: Tomcat 9
 - **Containerization**: Docker
-- **Deployment**: Vercel (via Docker)
+- **Deployment**: Google Cloud Run (via Docker)
 
 ## Demo Users
 
@@ -84,19 +84,45 @@ src/main/java/com/struts/admin/
    docker run -p 8080:8080 struts-admin
    ```
 
-### Vercel Deployment
+### Google Cloud Run Deployment
 
-1. **Install Vercel CLI:**
+1. **Prerequisites:**
+   - Google Cloud account with billing enabled
+   - `gcloud` CLI installed and authenticated
+   - Docker installed locally
+
+2. **Quick Deploy:**
    ```bash
-   npm i -g vercel
+   # Replace 'your-project-id' with your actual GCP project ID
+   ./deploy.sh your-project-id us-central1
    ```
 
-2. **Deploy:**
+3. **Manual Deploy:**
    ```bash
-   vercel --prod
+   # Set your project
+   gcloud config set project YOUR_PROJECT_ID
+   
+   # Enable required APIs
+   gcloud services enable cloudbuild.googleapis.com run.googleapis.com
+   
+   # Build and deploy
+   gcloud builds submit --tag gcr.io/YOUR_PROJECT_ID/struts-admin .
+   gcloud run deploy struts-admin \
+     --image gcr.io/YOUR_PROJECT_ID/struts-admin \
+     --region us-central1 \
+     --platform managed \
+     --allow-unauthenticated
    ```
 
-The `vercel.json` configuration will automatically use the Dockerfile for deployment.
+4. **CI/CD with Cloud Build:**
+   ```bash
+   # Connect your GitHub repository to Cloud Build
+   gcloud builds triggers create github \
+     --repo-name=struts-admin \
+     --repo-owner=YOUR_GITHUB_USERNAME \
+     --branch-pattern="^main$" \
+     --build-config=cloudbuild.yaml
+   ```
 
 ## Project Structure
 
@@ -118,7 +144,8 @@ struts-admin/
 │   │       ├── WEB-INF/web.xml
 │   │       └── index.jsp
 ├── Dockerfile
-├── vercel.json
+├── cloudbuild.yaml
+├── deploy.sh
 ├── pom.xml
 └── README.md
 ```
