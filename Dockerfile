@@ -30,33 +30,9 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/* \
 # Copy the built WAR file
 COPY --from=build /app/target/struts-admin.war /usr/local/tomcat/webapps/ROOT.war
 
-# Create custom server.xml that uses PORT environment variable
-RUN cat > /usr/local/tomcat/conf/server.xml << 'EOF'
-<?xml version="1.0" encoding="UTF-8"?>
-<Server port="-1" shutdown="SHUTDOWN">
-  <Listener className="org.apache.catalina.startup.VersionLoggerListener" />
-  <Listener className="org.apache.catalina.core.AprLifecycleListener" SSLEngine="on" />
-  <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener" />
-  <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
-  <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener" />
-
-  <Service name="Catalina">
-    <Connector port="${PORT:-8080}" protocol="HTTP/1.1"
-               connectionTimeout="20000"
-               redirectPort="8443"
-               maxThreads="200"
-               minSpareThreads="10" />
-
-    <Engine name="Catalina" defaultHost="localhost">
-      <Host name="localhost" appBase="webapps" unpackWARs="true" autoDeploy="true">
-        <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs"
-               prefix="localhost_access_log" suffix=".txt"
-               pattern="%h %l %u %t &quot;%r&quot; %s %b" />
-      </Host>
-    </Engine>
-  </Service>
-</Server>
-EOF
+# Copy custom server.xml and startup script
+COPY server.xml /usr/local/tomcat/conf/server.xml
+COPY start.sh /usr/local/tomcat/bin/start.sh
 
 # Cloud Run optimizations for faster startup
 ENV JAVA_OPTS="-Xmx512m -Xms256m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
@@ -67,26 +43,8 @@ ENV PORT=8080
 EXPOSE $PORT
 
 # Set ownership and permissions
-RUN chown -R tomcat:tomcat /usr/local/tomcat
-RUN chmod +x /usr/local/tomcat/bin/*.sh
-
-# Create startup script that handles PORT variable properly
-RUN cat > /usr/local/tomcat/bin/start.sh << 'EOF'
-#!/bin/bash
-set -e
-
-# Ensure PORT environment variable is set
-export PORT=${PORT:-8080}
-
-echo "Starting Tomcat on port $PORT"
-echo "Java version: $(java -version 2>&1 | head -n 1)"
-echo "Memory: $(free -h | grep Mem)"
-
-# Start Tomcat
-exec catalina.sh run
-EOF
-
-RUN chmod +x /usr/local/tomcat/bin/start.sh
+RUN chown -R tomcat:tomcat /usr/local/tomcat \
+    && chmod +x /usr/local/tomcat/bin/*.sh
 
 # Switch to tomcat user
 USER tomcat
