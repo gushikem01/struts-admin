@@ -35,8 +35,8 @@ COPY server.xml /usr/local/tomcat/conf/server.xml
 COPY start.sh /usr/local/tomcat/bin/start.sh
 
 # Cloud Run optimizations for faster startup
-ENV JAVA_OPTS="-Xmx512m -Xms256m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
-ENV CATALINA_OPTS="-Dfile.encoding=UTF-8 -Djava.security.egd=file:/dev/./urandom -Djava.awt.headless=true"
+ENV JAVA_OPTS="-Xmx512m -Xms512m -XX:+UseSerialGC -XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Djava.security.egd=file:/dev/./urandom"
+ENV CATALINA_OPTS="-Dfile.encoding=UTF-8 -Djava.awt.headless=true -Dorg.apache.catalina.startup.EXIT_ON_INIT_FAILURE=true"
 
 # Set default PORT for local development
 ENV PORT=8080

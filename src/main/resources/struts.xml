@@ -10,7 +10,18 @@
     <constant name="struts.ui.theme" value="simple"/>
     <constant name="struts.action.extension" value="action,,"/>
     
+    <!-- JSON support package -->
+    <package name="json-default" extends="struts-default">
+        <result-types>
+            <result-type name="json" class="org.apache.struts2.json.JSONResult"/>
+        </result-types>
+    </package>
+    
     <package name="default" extends="struts-default">
+        <result-types>
+            <result-type name="json" class="org.apache.struts2.json.JSONResult"/>
+        </result-types>
+        
         <interceptors>
             <interceptor name="authInterceptor" class="com.struts.admin.infrastructure.web.interceptor.AuthInterceptor"/>
             <interceptor-stack name="authStack">
@@ -43,6 +54,11 @@
         <action name="dashboard" class="com.struts.admin.infrastructure.web.action.DashboardAction">
             <interceptor-ref name="authStack"/>
             <result name="success">/views/dashboard/dashboard.jsp</result>
+        </action>
+        
+        <!-- Health check endpoint for monitoring -->
+        <action name="health" class="com.struts.admin.infrastructure.web.action.HealthCheckAction" method="health">
+            <result name="success" type="json"/>
         </action>
     </package>
 </struts>
